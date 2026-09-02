@@ -6,7 +6,7 @@ import pluginPromise from 'eslint-plugin-promise'
 import { equivalents, ourRules } from './_util.js'
 import _ from 'lodash'
 import type { TSESLint } from '@typescript-eslint/utils'
-import js from '@eslint/js'
+import { coreRuleNames, deprecatedCoreRuleNames } from './_core-rules.js'
 import { intentionallyUnusedRules } from './_intentionally-unused-rules.js'
 import { rulesToConsider } from './_rules_to_consider.js'
 import { rulesPerPlugin } from '../plugin-usage.js'
@@ -15,9 +15,6 @@ import { expectedEslintRules } from './expected-exported-value/_eslint.js'
 import { expectedNRules } from './expected-exported-value/_n.js'
 import { expectedPromiseRules } from './expected-exported-value/_promise.js'
 import { expectedTseslintRules } from './expected-exported-value/_typescript-eslint.js'
-
-// Core ESLint rule names (configs.all excludes deprecated rules)
-const knownEslintRuleNames = Object.keys(js.configs.all.rules)
 
 if (pluginEslintComments.rules === undefined) throw new Error()
 if (pluginN.rules === undefined) throw new Error()
@@ -32,24 +29,26 @@ const rulesets: Array<[TSESLint.Linter.Plugin, string]> = [
 ]
 
 const knownRuleNames = [
-  ...knownEslintRuleNames,
+  ...coreRuleNames,
   ...rulesets.flatMap(([rules, pkgName]) =>
     Object.keys(rules).map((name) => `${pkgName}/${name}`),
   ),
 ]
 
-// Deprecated rules — only from plugins (core deprecated are excluded by configs.all)
-const deprecatedKnownRules = rulesets.flatMap(([rules, pkgName]) =>
-  Object.entries(rules)
-    .filter(([_name, rule_]: [string, unknown]) => {
-      if (typeof rule_ !== 'object' || rule_ === null) throw new Error()
-      if (!('meta' in rule_)) return false
-      const { meta } = rule_
-      if (typeof meta !== 'object' || meta === null) return false
-      return Object.hasOwn(meta, 'deprecated')
-    })
-    .map(([name, _rule]) => `${pkgName}/${name}`),
-)
+const deprecatedKnownRules = [
+  ...deprecatedCoreRuleNames,
+  ...rulesets.flatMap(([rules, pkgName]) =>
+    Object.entries(rules)
+      .filter(([_name, rule_]: [string, unknown]) => {
+        if (typeof rule_ !== 'object' || rule_ === null) throw new Error()
+        if (!('meta' in rule_)) return false
+        const { meta } = rule_
+        if (typeof meta !== 'object' || meta === null) return false
+        return Object.hasOwn(meta, 'deprecated')
+      })
+      .map(([name, _rule]) => `${pkgName}/${name}`),
+  ),
+]
 
 const usedRules = Object.keys(ourRules)
 

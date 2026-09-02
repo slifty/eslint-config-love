@@ -25,6 +25,17 @@ test('range types', (t) => {
         return spec !== '*'
       }
 
+      /*
+       * Pinned by git tag rather than by semver range, because it is not
+       * published to npm. See _core-rules.ts. That the tag matches the `eslint`
+       * dev dependency is asserted separately.
+       */
+      if (depName === 'eslint_docs' && depType === 'dev') {
+        return !/^https:\/\/github\.com\/eslint\/eslint\/archive\/refs\/tags\/v\d+\.\d+\.\d+\.tar\.gz$/v.test(
+          spec,
+        )
+      }
+
       const range = extractVersionRange(spec)
 
       switch (depType) {
